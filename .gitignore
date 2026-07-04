@@ -1,0 +1,16 @@
+# secrets — never commit
+.env
+mirofish/.env
+
+# python
+backend/.venv/
+__pycache__/
+*.pyc
+
+# node
+node_modules/
+mobile/.expo/
+
+# misc
+.DS_Store
+mirofish/backend/uploads/

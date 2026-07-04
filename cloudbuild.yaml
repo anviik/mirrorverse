@@ -1,0 +1,46 @@
+# Cloud Build: build the backend image and deploy it to Cloud Run.
+# Usage: gcloud builds submit --config cloudbuild.yaml
+#
+# Prereqs (one-time, see README "Deploy to GCP"):
+#   - Artifact Registry repo "mirrorverse" in $_REGION
+#   - Secrets created in Secret Manager (anthropic-api-key, neo4j-uri,
+#     neo4j-user, neo4j-password, mem0-api-key)
+#   - Cloud Run + Cloud Build + Secret Manager APIs enabled
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: mirrorverse-backend
+  _MIROFISH_URL: http://localhost:5001  # override with the MiroFish service URL if deployed
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/mirrorverse/${_SERVICE}:$SHORT_SHA
+      - ./backend
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/mirrorverse/${_SERVICE}:$SHORT_SHA
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/mirrorverse/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --memory=1Gi
+      - --timeout=600
+      - --set-secrets=ANTHROPIC_API_KEY=anthropic-api-key:latest,NEO4J_URI=neo4j-uri:latest,NEO4J_USER=neo4j-user:latest,NEO4J_PASSWORD=neo4j-password:latest,MEM0_API_KEY=mem0-api-key:latest
+      # MiroFish runs as a separate service; point at it if deployed, else the
+      # backend degrades gracefully (enrichment is best-effort).
+      - --set-env-vars=MIROFISH_URL=${_MIROFISH_URL}
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/mirrorverse/${_SERVICE}:$SHORT_SHA
