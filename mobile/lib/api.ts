@@ -1,13 +1,14 @@
 import Constants from "expo-constants";
 
-// When Metro runs in tunnel mode (exp.direct), the phone can't reach the Mac's
-// LAN IP — use the backend's public tunnel instead.
-const BACKEND_TUNNEL_URL = "https://mirrorverse-backend.loca.lt";
+// Production backend on GCP Cloud Run. When Metro runs in tunnel mode
+// (exp.direct) the phone can't reach the Mac's LAN IP, so use production;
+// on LAN, talk to the local dev backend for fast iteration.
+const PROD_BACKEND_URL = "https://mirrorverse-backend-gl32boj2ga-uc.a.run.app";
 
 function resolveBaseUrl(): string {
   const hostUri = Constants.expoConfig?.hostUri;
   const host = hostUri ? hostUri.split(":")[0] : "localhost";
-  if (host.endsWith("exp.direct")) return BACKEND_TUNNEL_URL;
+  if (host.endsWith("exp.direct")) return PROD_BACKEND_URL;
   return `http://${host}:8000`;
 }
 
