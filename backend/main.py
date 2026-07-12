@@ -136,6 +136,14 @@ def get_decision(decision_id: str):
     return decision
 
 
+# Serve the exported Expo web app (mounted last so API routes win)
+_webapp = os.path.join(os.path.dirname(__file__), "webapp")
+if os.path.isdir(_webapp):
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=_webapp, html=True), name="webapp")
+
+
 if __name__ == "__main__":
     import uvicorn
 

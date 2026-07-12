@@ -1,12 +1,31 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { WebView } from "react-native-webview";
+// react-native-webview has no web implementation; on web we render an iframe
+const WebView = Platform.OS === "web" ? null : require("react-native-webview").WebView;
+
+function GraphFrame({ html }: { html: string }) {
+  if (Platform.OS === "web") {
+    return React.createElement("iframe", {
+      srcDoc: html,
+      style: { border: "none", width: "100%", height: "100%", background: "#0b0e1a" },
+    });
+  }
+  return (
+    <WebView
+      source={{ html }}
+      style={{ backgroundColor: colors.bg }}
+      originWhitelist={["*"]}
+      javaScriptEnabled
+    />
+  );
+}
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { api, DecisionGraph } from "../lib/api";
 import { colors, nodeColors } from "../lib/theme";
@@ -78,12 +97,7 @@ export default function GraphScreen() {
 
       <View style={styles.webviewBox}>
         {html ? (
-          <WebView
-            source={{ html }}
-            style={{ backgroundColor: colors.bg }}
-            originWhitelist={["*"]}
-            javaScriptEnabled
-          />
+          <GraphFrame html={html} />
         ) : (
           <View style={styles.center}>
             {mode === "mirofish" && mirofishStatus !== "ready" ? (

@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import Constants from "expo-constants";
 
 // Production backend on GCP Cloud Run. When Metro runs in tunnel mode
@@ -6,6 +7,15 @@ import Constants from "expo-constants";
 const PROD_BACKEND_URL = "https://mirrorverse-backend-gl32boj2ga-uc.a.run.app";
 
 function resolveBaseUrl(): string {
+  if (Platform.OS === "web") {
+    // Served from the backend itself in production → same origin.
+    // In local web dev (expo start --web on :8081+), talk to local backend.
+    const loc = typeof window !== "undefined" ? window.location : null;
+    if (loc && (loc.hostname === "localhost" || loc.hostname === "127.0.0.1")) {
+      return "http://localhost:8000";
+    }
+    return "";
+  }
   const hostUri = Constants.expoConfig?.hostUri;
   const host = hostUri ? hostUri.split(":")[0] : "localhost";
   if (host.endsWith("exp.direct")) return PROD_BACKEND_URL;
