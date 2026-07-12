@@ -1,0 +1,23 @@
+# Build + deploy the MiroFish simulation service (API only).
+# Usage: gcloud builds submit --config cloudbuild-mirofish.yaml
+
+substitutions:
+  _REGION: us-central1
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/mirrorverse/mirofish-sim:latest
+      - -f
+      - mirofish/Dockerfile.backend
+      - ./mirofish
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/mirrorverse/mirofish-sim:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/mirrorverse/mirofish-sim:latest

@@ -1,0 +1,17 @@
+# MiroFish API only (no frontend) — for Cloud Run deployment.
+FROM python:3.11-slim
+
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+
+WORKDIR /app
+COPY backend/pyproject.toml backend/uv.lock ./backend/
+RUN cd backend && uv sync --frozen
+
+COPY backend ./backend
+COPY locales ./locales
+
+ENV PORT=8080
+EXPOSE 8080
+
+# Cloud Run injects PORT; MiroFish reads FLASK_PORT
+CMD cd backend && FLASK_PORT=${PORT} uv run python run.py
